@@ -1,12 +1,14 @@
 /* BASE STYLES */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@400;700;900&family=Cinzel:wght@400;700&display=swap');
+
 :root {
-    --bg-color: #03050a;
-    --primary: #00f0ff;
-    --secondary: #6e00ff;
-    --text-main: #ffffff;
-    --text-muted: #8b9bb4;
-    --glass-bg: rgba(10, 15, 30, 0.4);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --bg-color: #010204; /* Deep void black */
+    --primary: #00d2ff; /* Electric cyan */
+    --secondary: #8a2be2; /* Nebula purple */
+    --text-main: #f0f4f8;
+    --text-muted: #94a3b8;
+    --glass-bg: rgba(5, 10, 20, 0.35);
+    --glass-border: rgba(255, 255, 255, 0.05);
 }
 
 * {
@@ -16,7 +18,7 @@
 }
 
 body {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: 'Inter', sans-serif;
     background-color: var(--bg-color);
     color: var(--text-main);
     overflow-x: hidden;
@@ -44,14 +46,12 @@ a { text-decoration: none; }
 
 /* The true Glassmorphism Class */
 .glassmorphism {
-    background: linear-gradient(135deg, rgba(20, 25, 40, 0.6), rgba(10, 15, 30, 0.3));
-    backdrop-filter: blur(25px) saturate(200%);
-    -webkit-backdrop-filter: blur(25px) saturate(200%);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-    border-left: 1px solid rgba(255, 255, 255, 0.1);
-    border-right: 1px solid rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 30px 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.1);
+    background: linear-gradient(135deg, rgba(15, 20, 35, 0.5), rgba(5, 10, 20, 0.2));
+    backdrop-filter: blur(40px) saturate(250%);
+    -webkit-backdrop-filter: blur(40px) saturate(250%);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    border-radius: 24px;
 }
 
 /* NAVBAR */
