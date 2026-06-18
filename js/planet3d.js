@@ -36,27 +36,28 @@ function init3DPlanet() {
     backLight.position.set(-5, 3, -5);
     scene.add(backLight);
 
-    // Sphere Geometry
-    const geometry = new THREE.SphereGeometry(6, 64, 64);
+    // Sphere Geometry - Reduced segments for massive performance gain
+    const geometry = new THREE.SphereGeometry(6, 32, 32);
     
     // Initial Material
     const material = new THREE.MeshStandardMaterial({
         color: 0xffffff,
-        roughness: 0.6,
+        roughness: 0.8,
         metalness: 0.1,
     });
     
     globe = new THREE.Mesh(geometry, material);
     scene.add(globe);
 
-    // Optional Clouds Layer
-    const cloudGeo = new THREE.SphereGeometry(6.1, 64, 64);
+    // Optional Clouds Layer - Optimized geometry
+    const cloudGeo = new THREE.SphereGeometry(6.1, 32, 32);
     const cloudMat = new THREE.MeshPhongMaterial({
         color: 0xffffff,
         transparent: true,
-        opacity: 0.2,
+        opacity: 0.15,
         blending: THREE.AdditiveBlending,
-        side: THREE.DoubleSide
+        side: THREE.FrontSide, // FrontSide is cheaper than DoubleSide
+        depthWrite: false // Prevents z-fighting and improves perf
     });
     clouds = new THREE.Mesh(cloudGeo, cloudMat);
     scene.add(clouds);
@@ -110,9 +111,8 @@ function updatePlanetTexture3D(imgSrc) {
         texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
         globe.material.map = texture;
         globe.material.needsUpdate = true;
-        
-        // Add subtle displacement based on the image itself
-        globe.material.displacementMap = texture;
-        globe.material.displacementScale = 0.2;
+        // Use bumpMap instead of displacementMap to save massive CPU/GPU calculation
+        globe.material.bumpMap = texture;
+        globe.material.bumpScale = 0.05;
     });
 }

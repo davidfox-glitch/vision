@@ -114,7 +114,7 @@ $apod = getApodFromDB();
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="js/bg-stars.js?v=<?php echo time(); ?>"></script>
+    <script src="js/bg-stars.min.js"></script>
     <script src="js/planet3d.js?v=<?php echo time(); ?>"></script>
     <script src="script.js?v=<?php echo time(); ?>"></script>
 

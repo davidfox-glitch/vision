@@ -5,7 +5,7 @@
   "main": "script.js",
   "scripts": {
     "build:css": "cleancss -o style.min.css style.css",
-    "build:js": "uglifyjs js/chat.js -o js/chat.min.js -m && uglifyjs js/planet3d.js -o js/planet3d.min.js -m",
+    "build:js": "uglifyjs js/chat.js -o js/chat.min.js -m && uglifyjs js/planet3d.js -o js/planet3d.min.js -m && uglifyjs js/bg-stars.js -o js/bg-stars.min.js -m",
     "build": "npm-run-all build:css build:js"
   },
   "repository": {
