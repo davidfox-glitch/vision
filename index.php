@@ -886,7 +886,8 @@ session_start();
             <button id="chat-send">&#10148;</button>
         </div>
     </div>
-    <button id="chat-widget-button">&#128172;</button>
+    <button id="chat-widget-button">&#128640;</button>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/chat.js"></script>
 </body>
 </html>

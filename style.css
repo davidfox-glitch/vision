@@ -605,3 +605,24 @@ a { text-decoration: none; }
 #chat-send:hover {
     transform: scale(1.1);
 }
+
+/* Chat Markdown Styles */
+.chat-message p {
+    margin-bottom: 0.5rem;
+}
+.chat-message p:last-child {
+    margin-bottom: 0;
+}
+.chat-message a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+.chat-message a:hover {
+    text-shadow: 0 0 5px var(--primary);
+}
+.chat-message img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+}

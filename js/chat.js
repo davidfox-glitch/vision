@@ -65,9 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
     function addMessage(text, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('chat-message', `${sender}-message`);
-        // Basic markdown formatting
-        text = text.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\*(.*?)\*/g, '<i>$1</i>');
-        msgDiv.innerHTML = text;
+        
+        // Parse markdown if it's from the bot
+        if (sender === 'bot') {
+            msgDiv.innerHTML = marked.parse(text);
+        } else {
+            msgDiv.textContent = text; // Secure user input
+        }
+        
         chatMessages.appendChild(msgDiv);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         return msgDiv;
