@@ -1,19 +1,38 @@
 <?php
 header('Content-Type: application/json');
 
-// Get the API key from environment variables (checking both common formats)
-$geminiApiKey = getenv('GEMINI_API_KEY') ?: getenv('gemini');
+$geminiApiKey = null;
+foreach (['GEMINI_API_KEY', 'GOOGLE_API_KEY', 'gemini', 'Gemini_API_KEY'] as $key) {
+    if (!empty($_ENV[$key])) {
+        $geminiApiKey = $_ENV[$key];
+        break;
+    }
+    if (!empty($_SERVER[$key])) {
+        $geminiApiKey = $_SERVER[$key];
+        break;
+    }
+    $envValue = getenv($key);
+    if ($envValue !== false && $envValue !== '') {
+        $geminiApiKey = $envValue;
+        break;
+    }
+}
 
 if (!$geminiApiKey) {
-    echo json_encode(['error' => 'Gemini API key not found in environment variables.']);
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Gemini API key is not configured on the server.',
+        'details' => 'Set GEMINI_API_KEY (or GOOGLE_API_KEY) in your deployment environment.'
+    ]);
     exit;
 }
 
-// Get the POST data sent from the client
 $inputData = json_decode(file_get_contents('php://input'), true);
-
 if (!$inputData) {
-    echo json_encode(['error' => 'No input data provided.']);
+    http_response_code(400);
+    echo json_encode([
+        'error' => 'No input data provided.'
+    ]);
     exit;
 }
 
@@ -25,11 +44,19 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($inputData));
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    'Content-Type: application/json'
+    'Content-Type: application/json',
+    'Accept: application/json'
 ]);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+if ($response === false) {
+    $response = json_encode([
+        'error' => 'Failed to reach Gemini API.',
+        'details' => curl_error($ch)
+    ]);
+    $httpCode = 500;
+}
 curl_close($ch);
 
 if ($httpCode !== 200) {

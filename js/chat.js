@@ -46,10 +46,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             const data = await response.json();
-            
             typingIndicator.remove();
 
-            if (data.candidates && data.candidates[0].content.parts[0].text) {
+            if (data.error) {
+                console.error('Gemini API error:', data);
+                addMessage(data.details || data.error || 'Unable to reach Gemini API.', 'bot');
+            } else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
                 addMessage(data.candidates[0].content.parts[0].text, 'bot');
             } else {
                 addMessage("I'm sorry, I couldn't process that request.", 'bot');

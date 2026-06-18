@@ -4,28 +4,43 @@ require_once 'db.php';
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
     
-    if (!empty($username) && !empty($password)) {
-        try {
-            $users = supabase_request("registered_accounts?username=eq." . urlencode($username) . "&select=id,password");
-            
-            if (!empty($users)) {
-                $user = $users[0];
-                if (password_verify($password, $user['password'])) {
-                    $_SESSION['user_id'] = $user['id'];
-                    $_SESSION['username'] = $username;
+    if (!empty($email) && !empty($password)) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $message = "Please enter a valid email address!";
+        } else {
+            try {
+                $tokenResponse = supabase_auth_request('token?grant_type=password', 'POST', [
+                    'email' => $email,
+                    'password' => $password
+                ]);
+
+                if (!empty($tokenResponse['access_token']) && !empty($tokenResponse['user'])) {
+                    $_SESSION['user_id'] = $tokenResponse['user']['id'];
+                    $_SESSION['username'] = $tokenResponse['user']['user_metadata']['username'] ?? $email;
+                    $_SESSION['supabase_token'] = $tokenResponse['access_token'];
                     header("Location: dashboard.php");
                     exit();
                 } else {
-                    $error = "Invalid password!";
+                    $message = "Login failed!";
                 }
-            } else {
-                $error = "User not found!";
+            } catch (Exception $e) {
+                if (is_missing_table_error($e->getMessage())) {
+                    $users = load_auth_users();
+                    if (isset($users[$email]) && password_verify($password, $users[$email]['password'])) {
+                        $_SESSION['user_id'] = md5($email);
+                        $_SESSION['username'] = $users[$email]['username'] ?? $email;
+                        header("Location: dashboard.php");
+                        exit();
+                    } else {
+                        $message = "User not found or invalid password!";
+                    }
+                } else {
+                    $message = "Error: " . $e->getMessage();
+                }
             }
-        } catch(Exception $e) {
-            $error = "Error: " . $e->getMessage();
         }
     } else {
         $message = "Please fill all fields!";
@@ -71,8 +86,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         <form method="POST" action="">
             <div class="form-group">
-                <label>Username</label>
-                <input type="text" name="username" required>
+                <label>Email</label>
+                <input type="email" name="email" required>
             </div>
             <div class="form-group">
                 <label>Password</label>

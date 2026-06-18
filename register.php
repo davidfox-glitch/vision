@@ -5,26 +5,50 @@ require_once 'db.php';
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username']);
+    $email = trim($_POST['email']);
     $password = $_POST['password'];
     
-    if (!empty($username) && !empty($password)) {
-        try {
-            // Check if username exists
-            $existingUser = supabase_request("registered_accounts?username=eq." . urlencode($username));
-            
-            if (!empty($existingUser)) {
-                $message = "Username already exists!";
-            } else {
-                $hash = password_hash($password, PASSWORD_DEFAULT);
-                // Insert new user
-                supabase_request("registered_accounts", "POST", [
-                    'username' => $username,
-                    'password' => $hash
+    if (!empty($username) && !empty($email) && !empty($password)) {
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $message = "Please enter a valid email address!";
+        } else {
+            try {
+                $authResponse = supabase_auth_request('signup', 'POST', [
+                    'email' => $email,
+                    'password' => $password,
+                    'options' => [
+                        'data' => [
+                            'username' => $username
+                        ]
+                    ]
                 ]);
-                $message = "Registration successful! <a href='login.php'>Login here</a>";
+
+                if (!empty($authResponse['user'])) {
+                    $_SESSION['user_id'] = $authResponse['user']['id'];
+                    $_SESSION['username'] = $username;
+                    $_SESSION['supabase_token'] = $authResponse['access_token'] ?? null;
+                    $message = "Registration successful! <a href='dashboard.php'>Continue to dashboard</a>";
+                } else {
+                    $message = "Registration successful! Please login.";
+                }
+            } catch (Exception $e) {
+                if (is_missing_table_error($e->getMessage())) {
+                    $users = load_auth_users();
+                    if (isset($users[$email])) {
+                        $message = "An account with that email already exists!";
+                    } else {
+                        $users[$email] = [
+                            'username' => $username,
+                            'password' => password_hash($password, PASSWORD_DEFAULT),
+                            'created_at' => date('Y-m-d H:i:s')
+                        ];
+                        save_auth_users($users);
+                        $message = "Registration successful! <a href='login.php'>Login here</a>";
+                    }
+                } else {
+                    $message = "Error: " . $e->getMessage();
+                }
             }
-        } catch(Exception $e) {
-            $message = "Error: " . $e->getMessage();
         }
     } else {
         $message = "Please fill all fields!";
@@ -72,6 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div class="form-group">
                 <label>Username</label>
                 <input type="text" name="username" required>
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" required>
             </div>
             <div class="form-group">
                 <label>Password</label>
