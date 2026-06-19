@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatSend = document.getElementById('chat-send');
     const chatMessages = document.getElementById('chat-messages');
 
-    if (!chatButton || !chatContainer) return;
+    if (!chatButton || !chatContainer || !closeChat || !chatInput || !chatSend || !chatMessages) return;
 
     chatButton.addEventListener('click', () => {
         chatContainer.classList.toggle('hidden');
@@ -77,12 +77,16 @@ document.addEventListener('DOMContentLoaded', () => {
     function addMessage(text, sender) {
         const msgDiv = document.createElement('div');
         msgDiv.classList.add('chat-message', `${sender}-message`);
+
+        const safeText = typeof text === 'string'
+            ? text
+            : JSON.stringify(text ?? {}, null, 2);
         
         // Parse markdown if it's from the bot
         if (sender === 'bot') {
-            msgDiv.innerHTML = marked.parse(text);
+            msgDiv.innerHTML = marked.parse(safeText);
         } else {
-            msgDiv.textContent = text; // Secure user input
+            msgDiv.textContent = safeText; // Secure user input
         }
         
         chatMessages.appendChild(msgDiv);
