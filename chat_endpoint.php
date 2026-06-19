@@ -27,6 +27,16 @@ if (!$geminiApiKey) {
     exit;
 }
 
+$geminiApiKey = trim($geminiApiKey);
+if ($geminiApiKey === '') {
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Gemini API key is empty.',
+        'details' => 'The configured API key appears to be blank.'
+    ]);
+    exit;
+}
+
 $inputData = json_decode(file_get_contents('php://input'), true);
 if (!$inputData) {
     http_response_code(400);
@@ -36,7 +46,19 @@ if (!$inputData) {
     exit;
 }
 
-$url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={$geminiApiKey}";
+$query = http_build_query([
+    'key' => $geminiApiKey
+]);
+$url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?' . $query;
+
+if (!filter_var($url, FILTER_VALIDATE_URL)) {
+    http_response_code(500);
+    echo json_encode([
+        'error' => 'Generated Gemini API URL is invalid.',
+        'details' => 'The configured API key may contain characters that break the URL.'
+    ]);
+    exit;
+}
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $url);
@@ -47,6 +69,7 @@ curl_setopt($ch, CURLOPT_HTTPHEADER, [
     'Content-Type: application/json',
     'Accept: application/json'
 ]);
+curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);

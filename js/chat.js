@@ -31,7 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const typingIndicator = addMessage('...', 'bot');
 
         try {
-            const response = await fetch('chat_endpoint.php', {
+            const endpoint = new URL('chat_endpoint.php', window.location.href).toString();
+            const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -45,10 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
             });
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (parseError) {
+                data = {
+                    error: 'Invalid response from chat endpoint.',
+                    details: await response.text()
+                };
+            }
+
             typingIndicator.remove();
 
-            if (data.error) {
+            if (!response.ok || data.error) {
                 console.error('Gemini API error:', data);
                 addMessage(data.details || data.error || 'Unable to reach Gemini API.', 'bot');
             } else if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
@@ -60,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Chat Error:", error);
             typingIndicator.remove();
-            addMessage("Error connecting to Gemini API.", 'bot');
+            addMessage(error instanceof Error ? error.message : "Error connecting to Gemini API.", 'bot');
         }
     }
 
