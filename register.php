@@ -4,16 +4,17 @@ require_once 'db.php';
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = trim($_POST['username']);
+    $username = trim($_POST['username'] ?? '');
     $email = normalize_email($_POST['email'] ?? '');
-    $password = $_POST['password'];
+    $password = $_POST['password'] ?? '';
     
     if (!empty($username) && !empty($email) && !empty($password)) {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             $message = "Please enter a valid email address!";
         } else {
             try {
-                $authResponse = supabase_auth_request('signup', 'POST', [
+                $redirectTo = app_url('login.php?confirmed=1');
+                $authResponse = supabase_auth_request('signup?redirect_to=' . rawurlencode($redirectTo), 'POST', [
                     'email' => $email,
                     'password' => $password,
                     'options' => [
@@ -23,31 +24,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     ]
                 ]);
 
-                if (!empty($authResponse['user'])) {
-                    $_SESSION['user_id'] = $authResponse['user']['id'];
-                    $_SESSION['username'] = $username;
-                    $_SESSION['supabase_token'] = $authResponse['access_token'] ?? null;
-                    $message = "Registration successful! <a href='dashboard.php'>Continue to dashboard</a>";
-                } else {
-                    $message = "Registration successful! Please login.";
+                if (empty($authResponse['user'])) {
+                    throw new Exception('Invalid Supabase registration response');
                 }
+
+                unset($_SESSION['user_id'], $_SESSION['username'], $_SESSION['supabase_token']);
+                header("Location: login.php?registered=1&email=" . rawurlencode($email));
+                exit();
             } catch (Exception $e) {
-                if (is_missing_table_error($e->getMessage()) || strpos($e->getMessage(), 'auth') !== false || strpos($e->getMessage(), 'signup') !== false) {
-                    $users = load_auth_users();
-                    if (isset($users[$email])) {
-                        $message = "An account with that email already exists!";
-                    } else {
-                        $users[$email] = [
-                            'username' => $username,
-                            'email' => $email,
-                            'password' => password_hash($password, PASSWORD_DEFAULT),
-                            'created_at' => date('Y-m-d H:i:s')
-                        ];
-                        save_auth_users($users);
-                        $message = "Registration successful! <a href='login.php'>Login here</a>";
-                    }
+                $errorMessage = supabase_auth_error_message($e->getMessage());
+                if (stripos($errorMessage, 'already registered') !== false || stripos($errorMessage, 'already exists') !== false) {
+                    $message = "An account with that email already exists!";
+                } elseif (stripos($errorMessage, 'rate limit') !== false) {
+                    $message = "Supabase email rate limit reached. Set up custom SMTP in Supabase Auth email settings, then try again.";
                 } else {
-                    $message = "Error: " . $e->getMessage();
+                    $message = "Registration failed: " . htmlspecialchars($errorMessage);
                 }
             }
         }

@@ -1,8 +1,7 @@
 <?php
 define('SUPABASE_URL', 'https://tafbhuqkfgvvfrlqowek.supabase.co');
-define('SUPABASE_ANON_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhZmJodXFrZmd2dmZybHFvd2VrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE3MDI2MTcsImV4cCI6MjA5NzI3ODYxN30.QVR8FJ9HqpxkAydOdw1a5PagcIuCkiRmjwLzp3Ap63U');
-
-define('AUTH_FALLBACK_FILE', __DIR__ . '/data/users.json');
+define('SUPABASE_PUBLISHABLE_KEY', 'sb_publishable_nvAb-we6S0nx0_fSEkUIig_NxDH9chP');
+define('SUPABASE_ANON_KEY', SUPABASE_PUBLISHABLE_KEY);
 
 function supabase_request($endpoint, $method = 'GET', $data = null, $headers = []) {
     $url = SUPABASE_URL . '/rest/v1/' . ltrim($endpoint, '/');
@@ -76,36 +75,31 @@ function supabase_auth_request($endpoint, $method = 'POST', $data = null, $heade
     return json_decode($response, true);
 }
 
-function is_missing_table_error($message) {
-    return stripos($message, 'PGRST205') !== false || stripos($message, 'Could not find the table') !== false;
+function supabase_auth_error_message($message) {
+    $jsonStart = strpos($message, '{');
+    if ($jsonStart !== false) {
+        $decoded = json_decode(substr($message, $jsonStart), true);
+        if (is_array($decoded)) {
+            return $decoded['msg'] ?? $decoded['message'] ?? $message;
+        }
+    }
+
+    return $message;
 }
 
 function normalize_email($email) {
     return strtolower(trim($email));
 }
 
-function load_auth_users() {
-    if (!file_exists(AUTH_FALLBACK_FILE)) {
-        return [];
-    }
+function app_url($path = '') {
+    $forwardedProto = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
+    $scheme = (!empty($forwardedProto))
+        ? explode(',', $forwardedProto)[0]
+        : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $basePath = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '')), '/');
+    $path = ltrim($path, '/');
 
-    $contents = file_get_contents(AUTH_FALLBACK_FILE);
-    if ($contents === false || trim($contents) === '') {
-        return [];
-    }
-
-    $data = json_decode($contents, true);
-    return is_array($data) ? $data : [];
-}
-
-function save_auth_users($users) {
-    if (!is_dir(dirname(AUTH_FALLBACK_FILE))) {
-        mkdir(dirname(AUTH_FALLBACK_FILE), 0777, true);
-    }
-
-    file_put_contents(
-        AUTH_FALLBACK_FILE,
-        json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
-    );
+    return $scheme . '://' . $host . ($basePath ? $basePath . '/' : '/') . $path;
 }
 ?>

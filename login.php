@@ -3,9 +3,16 @@ session_start();
 require_once 'db.php';
 
 $message = '';
+if (isset($_GET['registered'])) {
+    $registeredEmail = isset($_GET['email']) ? htmlspecialchars(normalize_email($_GET['email'])) : 'your email';
+    $message = "Registration successful! Please check " . $registeredEmail . " for the confirmation link, then login.";
+} elseif (isset($_GET['confirmed'])) {
+    $message = "Email confirmed! You can login now.";
+}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $email = normalize_email($_POST['email'] ?? '');
-    $password = $_POST['password'];
+    $password = $_POST['password'] ?? '';
     
     if (!empty($email) && !empty($password)) {
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -27,12 +34,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     throw new Exception('Invalid Supabase login response');
                 }
             } catch (Exception $e) {
-                $users = load_auth_users();
-                if (isset($users[$email]) && password_verify($password, $users[$email]['password'])) {
-                    $_SESSION['user_id'] = md5($email);
-                    $_SESSION['username'] = $users[$email]['username'] ?? $email;
-                    header("Location: dashboard.php");
-                    exit();
+                $errorMessage = supabase_auth_error_message($e->getMessage());
+                if (stripos($errorMessage, 'Email not confirmed') !== false) {
+                    $message = "Please confirm your email before logging in.";
                 } else {
                     $message = "User not found or invalid password!";
                 }
