@@ -1,0 +1,8 @@
+{
+    "testuser@example.com": {
+        "username": "TestUser",
+        "email": "testuser@example.com",
+        "password": "$2y$12$.h6W3QcLVV2FgzkSSop29.2ehvyvwvSG8UUNMiL4dh/HERJqs4Taq",
+        "created_at": "2026-06-20 07:23:50"
+    }
+}

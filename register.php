@@ -5,7 +5,7 @@ require_once 'db.php';
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = trim($_POST['username']);
-    $email = trim($_POST['email']);
+    $email = normalize_email($_POST['email'] ?? '');
     $password = $_POST['password'];
     
     if (!empty($username) && !empty($email) && !empty($password)) {
@@ -32,13 +32,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $message = "Registration successful! Please login.";
                 }
             } catch (Exception $e) {
-                if (is_missing_table_error($e->getMessage())) {
+                if (is_missing_table_error($e->getMessage()) || strpos($e->getMessage(), 'auth') !== false || strpos($e->getMessage(), 'signup') !== false) {
                     $users = load_auth_users();
                     if (isset($users[$email])) {
                         $message = "An account with that email already exists!";
                     } else {
                         $users[$email] = [
                             'username' => $username,
+                            'email' => $email,
                             'password' => password_hash($password, PASSWORD_DEFAULT),
                             'created_at' => date('Y-m-d H:i:s')
                         ];

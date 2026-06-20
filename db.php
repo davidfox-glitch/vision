@@ -80,6 +80,10 @@ function is_missing_table_error($message) {
     return stripos($message, 'PGRST205') !== false || stripos($message, 'Could not find the table') !== false;
 }
 
+function normalize_email($email) {
+    return strtolower(trim($email));
+}
+
 function load_auth_users() {
     if (!file_exists(AUTH_FALLBACK_FILE)) {
         return [];

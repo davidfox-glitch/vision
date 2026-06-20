@@ -4,7 +4,7 @@ require_once 'db.php';
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = trim($_POST['email']);
+    $email = normalize_email($_POST['email'] ?? '');
     $password = $_POST['password'];
     
     if (!empty($email) && !empty($password)) {
@@ -24,21 +24,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     header("Location: dashboard.php");
                     exit();
                 } else {
-                    $message = "Login failed!";
+                    throw new Exception('Invalid Supabase login response');
                 }
             } catch (Exception $e) {
-                if (is_missing_table_error($e->getMessage())) {
-                    $users = load_auth_users();
-                    if (isset($users[$email]) && password_verify($password, $users[$email]['password'])) {
-                        $_SESSION['user_id'] = md5($email);
-                        $_SESSION['username'] = $users[$email]['username'] ?? $email;
-                        header("Location: dashboard.php");
-                        exit();
-                    } else {
-                        $message = "User not found or invalid password!";
-                    }
+                $users = load_auth_users();
+                if (isset($users[$email]) && password_verify($password, $users[$email]['password'])) {
+                    $_SESSION['user_id'] = md5($email);
+                    $_SESSION['username'] = $users[$email]['username'] ?? $email;
+                    header("Location: dashboard.php");
+                    exit();
                 } else {
-                    $message = "Error: " . $e->getMessage();
+                    $message = "User not found or invalid password!";
                 }
             }
         }
